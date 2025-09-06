@@ -1,0 +1,9 @@
+*.o
+*.dtbo
+*.cmd
+*.ko
+*.symvers
+*.mod*
+*.order
+
+live.dts
