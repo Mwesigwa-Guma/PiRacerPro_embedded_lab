@@ -37,7 +37,7 @@ static bool ina219_writeable_reg(struct device *dev, unsigned int reg)
 {
 	switch (reg) {
 	case CALIBRATION_REG:
-	case BUSV_REG:
+	case CONFIG_REG:
         return true;
 	default:
 		return false;
@@ -89,7 +89,7 @@ static int ina219_init(struct device *dev, struct ina219_data *data);
 
 static int ina219_get_value(struct ina219_data *data, u8 reg, unsigned int regval){
     int val = (regval >> data->busv_shift) * data->busv_lsb;
-    val = DIV_ROUND_CLOSEST(val, 100);
+    val = DIV_ROUND_CLOSEST(val, 1000);
     return val;
 }
 
@@ -103,7 +103,7 @@ static ssize_t ina219_write(struct file *file, const char __user *buf, size_t co
 static ssize_t ina219_read(struct file *file, char __user *buf, size_t count, loff_t *ppos)
 {
     struct ina219_data* data = file->private_data;
-    int voltage_reg = BUSV_REG;
+    u8 voltage_reg = BUSV_REG;
 	struct regmap *regmap = data->regmap;
 	unsigned int regval;
 	int ret;
@@ -155,7 +155,7 @@ static const struct ina219_config ina219_config = {
 		.calibration_value = 4096,
 		.shunt_div = 100,
 		.bus_voltage_shift = 3,
-		.bus_voltage_lsb = 4000,
+		.bus_voltage_lsb = 689,
 		.power_lsb_factor = 20,
 		.has_alerts = false,
 		.has_ishunt = false,
@@ -243,6 +243,8 @@ static int ina219_probe(struct i2c_client *client)
     // store pointer to I2C client
     data->ina219_client = client;
     data->config = &ina219_config;
+    data->busv_shift = data->config->bus_voltage_shift;
+    data->busv_lsb   = data->config->bus_voltage_lsb;
 
     strncpy(data->name, DRIVER_NAME , sizeof(data->name) - 1);
     data->ina219_miscdev.name = data->name;
