@@ -5,5 +5,7 @@
 *.symvers
 *.mod*
 *.order
+*.a.out
+*
 
 live.dts

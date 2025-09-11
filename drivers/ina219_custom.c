@@ -28,7 +28,7 @@
 #define CURRENT_REG 0x04
 #define CALIBRATION_REG 0x05
 
-#define ina219_MAX_REGISTERS 0x05
+#define ina219_MAX_REGISTERS 0x07
 #define INA219_CONFIG_DEFAULT	0x399F	/* PGA=8 */
 #define ina219_RSHUNT_DEFAULT		10000
 
@@ -195,9 +195,12 @@ static int ina219_init(struct device *dev, struct ina219_data *data){
 	if (device_property_read_u32(dev, "shunt-resistor", &shunt) < 0)
 		shunt = ina219_RSHUNT_DEFAULT;
 
+    printk(KERN_INFO "INA219 attempting to set shunt voltage register \n");	
 	ret = ina219_set_shunt(data, shunt);
 	if (ret < 0)
 		return ret;
+
+    printk(KERN_INFO "INA219 attempting to set configuration register \n");	
 
 	ret = regmap_write(regmap, CONFIG_REG, data->config->config_default);
 	if (ret < 0)
@@ -206,6 +209,7 @@ static int ina219_init(struct device *dev, struct ina219_data *data){
 	if (data->config->has_ishunt)
 		return 0;
 
+    printk(KERN_INFO "INA219 attempting to write to calibration register \n");	
 	/*
 	 * Calibration register is set to the best value, which eliminates
 	 * truncation errors on calculating current register in hardware.
@@ -218,6 +222,7 @@ static int ina219_init(struct device *dev, struct ina219_data *data){
 
 static int ina219_probe(struct i2c_client *client)
 {
+    printk(KERN_INFO "INA219 attempting to probe \n");	
     dev_info(&client->dev, "ina219 I2C driver probing\n");
 
     struct ina219_data * data;
@@ -230,6 +235,7 @@ static int ina219_probe(struct i2c_client *client)
         return -ENOMEM;
     }
 
+    printk(KERN_INFO "INA219 attempting to set client data\n");	
     // store pointer to the device structure in bus device context
     i2c_set_clientdata(client, data);
 
@@ -245,16 +251,19 @@ static int ina219_probe(struct i2c_client *client)
     data->ina219_miscdev.parent = &client->dev;
     data->ina219_miscdev.mode = 0666;
 
+    printk(KERN_INFO "INA219 attempting to init regmap \n");	
     data->regmap = devm_regmap_init_i2c(client, &ina219_regmap_config);
 	if (IS_ERR(data->regmap)) {
 		dev_err(&client->dev, "failed to allocate register map\n");
 		return PTR_ERR(data->regmap);
 	}
 
+    printk(KERN_INFO "INA219 attempting device init \n");	
     ret = ina219_init(&client->dev, data);
 	if (ret < 0)
 		return dev_err_probe(&client->dev, ret, "failed to configure device\n");
 
+    printk(KERN_INFO "INA219 attempting device registration\n");	
     ret = misc_register(&data->ina219_miscdev);
     if(ret < 0){
         dev_info(&client->dev, "device registration failed");

@@ -20,6 +20,9 @@ cpoverlays:
 load:
 	sudo insmod $(MYSRC)/ina219_custom.ko
 
+dependencies:
+	sudo modprobe regmap-i2c
+
 unload:
 	sudo rmmod ina219_custom
 	sudo rmmod ina2xx
